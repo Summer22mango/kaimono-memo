@@ -165,11 +165,11 @@ const el = {
   buyEmpty:    document.getElementById("buy-empty"),
   buyCount:    document.getElementById("buy-count"),
 
-  fridgeForm:  document.getElementById("fridge-form"),
-  fridgeInput: document.getElementById("fridge-input"),
-  fridgeList:  document.getElementById("fridge-list"),
-  fridgeEmpty: document.getElementById("fridge-empty"),
-  fridgeCount: document.getElementById("fridge-count"),
+  fridgeForm:   document.getElementById("fridge-form"),
+  fridgeInput:  document.getElementById("fridge-input"),
+  fridgeGroups: document.getElementById("fridge-groups"),
+  fridgeEmpty:  document.getElementById("fridge-empty"),
+  fridgeCount:  document.getElementById("fridge-count"),
 
   homeForm:    document.getElementById("home-form"),
   homeInput:   document.getElementById("home-input"),
@@ -252,8 +252,8 @@ function render() {
   const fridgeItems = items.filter((it) => it.status === "fridge");
   const homeItems   = items.filter((it) => it.status === "home");
 
-  renderBuyGroups(buyItems);
-  renderFlatList(el.fridgeList, fridgeItems);
+  renderGroups(el.buyGroups, buyItems, buildBuyRow);
+  renderGroups(el.fridgeGroups, fridgeItems, buildStorageRow);
   renderFlatList(el.homeList, homeItems);
 
   // 件数バッジ
@@ -267,13 +267,16 @@ function render() {
   el.homeEmpty.hidden   = homeItems.length > 0;
 }
 
-// 買い物リスト：カテゴリーごとに見出しを付けてグループ表示
-function renderBuyGroups(buyItems) {
-  el.buyGroups.innerHTML = "";
+// カテゴリーごとに見出しを付けてグループ表示する（買い物リスト・冷蔵庫で共用）
+//   container : グループを入れる箱（el.buyGroups / el.fridgeGroups）
+//   list      : 表示する品物の配列
+//   rowBuilder: 1行を組み立てる関数（buildBuyRow / buildStorageRow）
+function renderGroups(container, list, rowBuilder) {
+  container.innerHTML = "";
 
   // CATEGORIES の順番でグループを並べる
   for (const cat of CATEGORIES) {
-    const inCat = buyItems.filter(
+    const inCat = list.filter(
       (it) => (it.category || FALLBACK_CATEGORY) === cat.key
     );
     if (inCat.length === 0) continue; // 中身が無いカテゴリーは見出しごと省略
@@ -290,10 +293,10 @@ function renderBuyGroups(buyItems) {
 
     const ul = document.createElement("ul");
     ul.className = "item-list";
-    for (const item of inCat) ul.appendChild(buildBuyRow(item));
+    for (const item of inCat) ul.appendChild(rowBuilder(item));
 
     group.append(head, ul);
-    el.buyGroups.appendChild(group);
+    container.appendChild(group);
   }
 }
 
