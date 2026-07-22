@@ -149,7 +149,10 @@ const CONFIG_READY =
   SUPABASE_ANON_KEY.length > 20;
 
 // --- Supabase クライアントを作成 ---
-const supabase = CONFIG_READY
+// ※ 変数名は「sb」にしています。CDN が作るグローバル変数「supabase」と
+//    同じ名前にすると「already been declared」で衝突し、アプリ全体が
+//    動かなくなるためです（window.supabase は CDN のライブラリ本体）。
+const sb = CONFIG_READY
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
@@ -222,7 +225,7 @@ function setLamp(state) {
 // ============================================================
 async function loadItems(silent = false) {
   if (!silent) showBanner("読み込み中…", "loading");
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from("items")
     .select("*")
     .order("created_at", { ascending: true });
@@ -377,7 +380,7 @@ async function addItem(name, status, category) {
   if (!trimmed) return;
 
   // insert したら、その行を返してもらう（.select()）
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from("items")
     .insert({ name: trimmed, status, category })
     .select();
@@ -396,7 +399,7 @@ async function addItem(name, status, category) {
 
 // 品物を移動（status を付け替える。category はそのまま保持）
 async function moveItem(item, newStatus) {
-  const { data, error } = await supabase
+  const { data, error } = await sb
     .from("items")
     .update({ status: newStatus })
     .eq("id", item.id)
@@ -414,7 +417,7 @@ async function moveItem(item, newStatus) {
 
 // 品物を削除
 async function deleteItem(item) {
-  const { error } = await supabase
+  const { error } = await sb
     .from("items")
     .delete()
     .eq("id", item.id);
@@ -491,7 +494,7 @@ el.homeForm.addEventListener("submit", (e) => {
 //  リアルタイム同期
 // ============================================================
 function subscribeRealtime() {
-  supabase
+  sb
     .channel("items-changes")
     .on(
       "postgres_changes",
