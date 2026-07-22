@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#e8825a" />
+  <title>買い物メモ</title>
+
+  <!-- PWA 設定 -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="買い物メモ" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <header class="app-header">
+    <h1 class="app-title">買い物メモ</h1>
+    <p class="app-subtitle">家族みんなで、いっしょに。</p>
+    <!-- 接続状態のちいさなランプ -->
+    <span id="connection-lamp" class="conn-lamp" title="同期の状態" aria-live="polite"></span>
+  </header>
+
+  <main class="app-main">
+
+    <!-- ============ 買い物リスト ============ -->
+    <section class="card" aria-labelledby="buy-heading">
+      <div class="card-head">
+        <h2 id="buy-heading" class="card-title"><span class="emoji" aria-hidden="true">🛒</span> 買い物リスト</h2>
+        <span id="buy-count" class="count-badge" aria-hidden="true"></span>
+      </div>
+
+      <form id="buy-form" class="add-form add-form--buy" autocomplete="off">
+        <input
+          id="buy-input"
+          class="add-input"
+          type="text"
+          name="buy"
+          placeholder="買うものを入力"
+          aria-label="買うものを入力"
+          maxlength="60"
+          enterkeyhint="done"
+        />
+        <div class="add-row">
+          <!-- カテゴリー選択（JS で中身を作ります。入力に合わせて自動で選ばれます） -->
+          <select id="buy-category" class="category-select" aria-label="カテゴリーを選ぶ"></select>
+          <button type="submit" class="add-btn">追加</button>
+        </div>
+        <p class="form-hint">カテゴリーは自動で選ばれます。ちがうときは変えてね。</p>
+      </form>
+
+      <!-- 状態表示（空リスト） -->
+      <p id="buy-empty" class="empty-msg" hidden>買うものを追加してね 🛍️</p>
+
+      <!-- カテゴリーごとのグループがここに入ります -->
+      <div id="buy-groups" class="group-wrap" aria-label="買い物リストの品物"></div>
+    </section>
+
+    <!-- ============ 冷蔵庫 ============ -->
+    <section class="card" aria-labelledby="fridge-heading">
+      <div class="card-head">
+        <h2 id="fridge-heading" class="card-title"><span class="emoji" aria-hidden="true">🧊</span> 冷蔵庫にあるもの</h2>
+        <span id="fridge-count" class="count-badge" aria-hidden="true"></span>
+      </div>
+
+      <form id="fridge-form" class="add-form" autocomplete="off">
+        <input
+          id="fridge-input"
+          class="add-input"
+          type="text"
+          name="fridge"
+          placeholder="家にある食材を入力"
+          aria-label="家にある食材を入力"
+          maxlength="60"
+          enterkeyhint="done"
+        />
+        <button type="submit" class="add-btn add-btn--fridge">追加</button>
+      </form>
+
+      <p id="fridge-empty" class="empty-msg" hidden>冷蔵庫はまだ空っぽ。あるものを追加してね 🥕</p>
+
+      <ul id="fridge-list" class="item-list" aria-label="冷蔵庫の品物"></ul>
+    </section>
+
+    <!-- ============ 家にあるもの（日用品） ============ -->
+    <section class="card" aria-labelledby="home-heading">
+      <div class="card-head">
+        <h2 id="home-heading" class="card-title"><span class="emoji" aria-hidden="true">🧴</span> 家にあるもの</h2>
+        <span id="home-count" class="count-badge" aria-hidden="true"></span>
+      </div>
+
+      <form id="home-form" class="add-form" autocomplete="off">
+        <input
+          id="home-input"
+          class="add-input"
+          type="text"
+          name="home"
+          placeholder="日用品を入力"
+          aria-label="日用品を入力"
+          maxlength="60"
+          enterkeyhint="done"
+        />
+        <button type="submit" class="add-btn add-btn--home">追加</button>
+      </form>
+
+      <p id="home-empty" class="empty-msg" hidden>日用品のストックを追加してね 🧻</p>
+
+      <ul id="home-list" class="item-list" aria-label="家にある日用品"></ul>
+    </section>
+
+    <!-- 全体の状態メッセージ（読み込み中・エラー） -->
+    <div id="status-banner" class="status-banner" role="status" aria-live="polite" hidden></div>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>チェックした品物は、食材なら冷蔵庫へ、日用品なら「家にあるもの」へ自動でうつります。</p>
+  </footer>
+
+  <!-- Supabase クライアント（CDN） -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 接続情報（貼り替え用） -->
+  <script src="config.js"></script>
+  <!-- アプリ本体 -->
+  <script src="app.js"></script>
+</body>
+</html>
