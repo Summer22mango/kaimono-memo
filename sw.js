@@ -8,7 +8,7 @@
 
 // キャッシュ名。ファイルを更新したら末尾の数字を上げると、
 // 各端末で新しい内容に更新されます（例: v2 → v3）。
-const CACHE_NAME = "kaimono-memo-v2";
+const CACHE_NAME = "kaimono-memo-v3";
 
 // 事前にキャッシュしておくファイル（アプリの「殻」）
 const APP_SHELL = [
