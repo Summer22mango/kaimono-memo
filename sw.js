@@ -7,8 +7,8 @@
 // ============================================================
 
 // キャッシュ名。ファイルを更新したら末尾の数字を上げると、
-// 各端末で新しい内容に更新されます（例: v1 → v2）。
-const CACHE_NAME = "kaimono-memo-v1";
+// 各端末で新しい内容に更新されます（例: v2 → v3）。
+const CACHE_NAME = "kaimono-memo-v2";
 
 // 事前にキャッシュしておくファイル（アプリの「殻」）
 const APP_SHELL = [
@@ -43,10 +43,12 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// 取得時の方針：
-//  - Supabase など外部への通信（API / Realtime）はキャッシュせず、
-//    そのままネットワークへ通す。
-//  - 自分のファイル（同じオリジン）は「キャッシュ優先」で高速表示。
+// 取得時の方針：「ネットワーク優先」
+//  - Supabase など外部への通信（API / Realtime）はキャッシュせず素通し。
+//  - 自分のファイル（同じオリジン）は、まずネットワークから最新を取得し、
+//    成功したらキャッシュも更新。オフラインのときだけキャッシュを使う。
+//  → これで、GitHub に上げ直した内容がすぐ反映されます
+//    （キャッシュ優先だと、古いファイルが残り続ける問題があるため）。
 self.addEventListener("fetch", (event) => {
   const req = event.request;
 
@@ -56,16 +58,13 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req)
-        .then((res) => {
-          // 取得したものはキャッシュに追加しておく
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-          return res;
-        })
-        .catch(() => cached); // オフラインで未キャッシュなら undefined
-    })
+    fetch(req)
+      .then((res) => {
+        // 取得できたら、その最新版をキャッシュにも保存しておく
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        return res;
+      })
+      .catch(() => caches.match(req)) // オフライン時はキャッシュから
   );
 });

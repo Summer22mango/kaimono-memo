@@ -217,9 +217,11 @@ function setLamp(state) {
 
 // ============================================================
 //  データの読み込み
+//  silent=true のときは「読み込み中」を出さずに静かに更新する
+//  （アプリを開き直したときの、さりげない同期に使う）。
 // ============================================================
-async function loadItems() {
-  showBanner("読み込み中…", "loading");
+async function loadItems(silent = false) {
+  if (!silent) showBanner("読み込み中…", "loading");
   const { data, error } = await supabase
     .from("items")
     .select("*")
@@ -227,13 +229,15 @@ async function loadItems() {
 
   if (error) {
     console.error(error);
-    showBanner("うまく読み込めませんでした。通信を確認して、画面を更新してね。", "error");
-    setLamp("offline");
+    if (!silent) {
+      showBanner("うまく読み込めませんでした。通信を確認して、画面を更新してね。", "error");
+      setLamp("offline");
+    }
     return;
   }
 
   items = data || [];
-  hideBanner();
+  if (!silent) hideBanner();
   render();
 }
 
@@ -361,7 +365,10 @@ function makeDeleteBtn(item) {
 
 // ============================================================
 //  操作：追加 / 移動 / 削除
-//  いずれも「サーバーを更新 → Realtime で再描画」に一本化。
+//  方針：サーバーを更新したら、自分の画面はその場で更新する（楽観的更新）。
+//  Realtime は「相手の端末の変更」を受け取る役割。applyChange は重複を
+//  防ぐので、Realtime で同じ変更がもう一度来ても二重にはなりません。
+//  → これで Realtime が届かなくても、必ず自分の画面に反映されます。
 // ============================================================
 
 // 品物を追加（status と category を指定）
@@ -369,27 +376,40 @@ async function addItem(name, status, category) {
   const trimmed = name.trim();
   if (!trimmed) return;
 
-  const { error } = await supabase
+  // insert したら、その行を返してもらう（.select()）
+  const { data, error } = await supabase
     .from("items")
-    .insert({ name: trimmed, status, category });
+    .insert({ name: trimmed, status, category })
+    .select();
 
   if (error) {
     console.error(error);
-    showBanner("追加できませんでした。もう一度ためしてね。", "error");
+    showBanner("追加できませんでした。通信を確認して、もう一度ためしてね。", "error");
+    return;
+  }
+  // 返ってきた行を自分の画面に反映
+  if (data && data[0]) {
+    applyChange({ eventType: "INSERT", new: data[0] });
+    render();
   }
 }
 
 // 品物を移動（status を付け替える。category はそのまま保持）
 async function moveItem(item, newStatus) {
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("items")
     .update({ status: newStatus })
-    .eq("id", item.id);
+    .eq("id", item.id)
+    .select();
 
   if (error) {
     console.error(error);
     showBanner("移動できませんでした。もう一度ためしてね。", "error");
+    return;
   }
+  const updated = (data && data[0]) || { ...item, status: newStatus };
+  applyChange({ eventType: "UPDATE", new: updated });
+  render();
 }
 
 // 品物を削除
@@ -402,7 +422,10 @@ async function deleteItem(item) {
   if (error) {
     console.error(error);
     showBanner("削除できませんでした。もう一度ためしてね。", "error");
+    return;
   }
+  applyChange({ eventType: "DELETE", old: { id: item.id } });
+  render();
 }
 
 // ============================================================
@@ -510,6 +533,13 @@ buildCategorySelect();
 if (CONFIG_READY) {
   loadItems();
   subscribeRealtime();
+
+  // アプリを開き直した／通信が復活したときに、静かに最新へ更新する。
+  // （Realtime が万一届かなくても、これで相手の変更が取り込めます）
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") loadItems(true);
+  });
+  window.addEventListener("online", () => loadItems(true));
 } else {
   showBanner("設定がまだです：config.js に Supabase の URL とキーを貼ってください。", "error");
   setLamp("offline");
