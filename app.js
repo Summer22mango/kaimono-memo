@@ -105,17 +105,19 @@ const CATEGORY_KEYWORDS = [
   ["dairy", [
     "牛乳", "ミルク", "ヨーグルト", "チーズ", "バター", "生クリーム",
     "ホイップ", "練乳", "マーガリン", "カマンベール", "モッツァレラ",
+    "豆乳", "アーモンドミルク", "オーツミルク",
   ]],
   ["vegetable", [
     "野菜", "にんじん", "人参", "キャベツ", "レタス", "玉ねぎ", "玉葱", "たまねぎ",
-    "ねぎ", "長ねぎ", "青ねぎ", "万能ねぎ", "大根", "だいこん",
+    "ねぎ", "ネギ", "長ねぎ", "青ねぎ", "万能ねぎ", "大根", "だいこん",
     "じゃがいも", "ジャガイモ", "いも", "さつまいも", "きゅうり", "キュウリ",
     "トマト", "なす", "ナス", "ピーマン", "パプリカ", "ほうれん草", "ほうれんそう",
     "小松菜", "ブロッコリー", "もやし", "きのこ", "しめじ", "えのき",
     "しいたけ", "まいたけ", "エリンギ", "にんにく", "しょうが", "生姜",
     "かぼちゃ", "ごぼう", "れんこん", "セロリ", "アスパラ", "とうもろこし",
     "コーン", "白菜", "はくさい", "春菊", "にら", "ニラ", "豆苗",
-    "枝豆", "えだまめ", "オクラ", "かぶ", "三つ葉", "パセリ", "大葉", "しそ",
+    "枝豆", "えだまめ", "オクラ", "かぶ", "三つ葉", "みつば", "パセリ",
+    "大葉", "しそ", "紫蘇", "アボカド",
     "レタス", "サニーレタス", "水菜", "豆腐", "納豆",
   ]],
   ["fruit", [
@@ -477,10 +479,10 @@ el.buyForm.addEventListener("submit", (e) => {
   el.buyInput.focus();
 });
 
-// 冷蔵庫に直接追加（食材なので category は「その他」扱い）
+// 冷蔵庫に直接追加（品名からカテゴリーを自動判定して振り分ける）
 el.fridgeForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  addItem(el.fridgeInput.value, "fridge", "other");
+  addItem(el.fridgeInput.value, "fridge", guessCategory(el.fridgeInput.value));
   el.fridgeInput.value = "";
   el.fridgeInput.focus();
 });
@@ -492,6 +494,74 @@ el.homeForm.addEventListener("submit", (e) => {
   el.homeInput.value = "";
   el.homeInput.focus();
 });
+
+// ============================================================
+//  タブ ＋ 横スワイプの切り替え
+//  ・タブをタップ → 対応するパネルへ横スクロール
+//  ・指で横にスワイプ → スクロール位置に合わせてタブの見た目を更新
+//  ・左右の矢印キーでも切り替えできる（アクセシビリティ）
+// ============================================================
+function setupTabs() {
+  const panels = document.getElementById("panels");
+  const tabs = Array.from(document.querySelectorAll(".tab"));
+  if (!panels || tabs.length === 0) return;
+
+  let current = 0; // いま表示中のタブ番号
+
+  // 指定の番号のパネルへ移動する
+  function goTo(i, smooth = true) {
+    current = Math.max(0, Math.min(i, tabs.length - 1));
+    panels.scrollTo({
+      left: current * panels.clientWidth,
+      behavior: smooth ? "smooth" : "auto",
+    });
+  }
+
+  tabs.forEach((tab) => {
+    // タップで切り替え
+    tab.addEventListener("click", () => goTo(Number(tab.dataset.index)));
+    // 左右キーで切り替え
+    tab.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        goTo(current + 1);
+        tabs[current].focus();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        goTo(current - 1);
+        tabs[current].focus();
+      }
+    });
+  });
+
+  // スクロール位置から「いま何番目か」を求めて、タブの見た目をそろえる
+  function syncActive() {
+    const w = panels.clientWidth || 1;
+    current = Math.round(panels.scrollLeft / w);
+    tabs.forEach((tab, idx) => {
+      const on = idx === current;
+      tab.classList.toggle("is-active", on);
+      tab.setAttribute("aria-selected", on ? "true" : "false");
+    });
+  }
+
+  // スワイプ中に何度も呼ばれるので、描画に合わせて間引く
+  let ticking = false;
+  panels.addEventListener("scroll", () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      syncActive();
+      ticking = false;
+    });
+  });
+
+  // 画面回転・リサイズ時は、いまのタブの位置に合わせ直す
+  window.addEventListener("resize", () => goTo(current, false));
+
+  syncActive();
+}
+setupTabs();
 
 // ============================================================
 //  リアルタイム同期

@@ -24,102 +24,126 @@
     <span id="connection-lamp" class="conn-lamp" title="同期の状態" aria-live="polite"></span>
   </header>
 
-  <main class="app-main">
+  <!-- ============ タブ（横スワイプでも切り替わります） ============ -->
+  <nav class="tab-bar" role="tablist" aria-label="リストの切り替え">
+    <button type="button" class="tab tab--buy is-active" role="tab"
+            aria-selected="true" aria-controls="panel-buy" data-index="0">
+      <span class="tab-emoji" aria-hidden="true">🛒</span>
+      <span class="tab-label">買い物</span>
+      <span id="buy-count" class="tab-count" aria-hidden="true"></span>
+    </button>
+    <button type="button" class="tab tab--fridge" role="tab"
+            aria-selected="false" aria-controls="panel-fridge" data-index="1">
+      <span class="tab-emoji" aria-hidden="true">🧊</span>
+      <span class="tab-label">冷蔵庫</span>
+      <span id="fridge-count" class="tab-count" aria-hidden="true"></span>
+    </button>
+    <button type="button" class="tab tab--home" role="tab"
+            aria-selected="false" aria-controls="panel-home" data-index="2">
+      <span class="tab-emoji" aria-hidden="true">🧴</span>
+      <span class="tab-label">家にあるもの</span>
+      <span id="home-count" class="tab-count" aria-hidden="true"></span>
+    </button>
+  </nav>
+
+  <!-- ============ パネル（横に3つ並べ、スワイプで移動） ============ -->
+  <main class="panels" id="panels">
 
     <!-- ============ 買い物リスト ============ -->
-    <section class="card" aria-labelledby="buy-heading">
-      <div class="card-head">
-        <h2 id="buy-heading" class="card-title"><span class="emoji" aria-hidden="true">🛒</span> 買い物リスト</h2>
-        <span id="buy-count" class="count-badge" aria-hidden="true"></span>
-      </div>
-
-      <form id="buy-form" class="add-form add-form--buy" autocomplete="off">
-        <input
-          id="buy-input"
-          class="add-input"
-          type="text"
-          name="buy"
-          placeholder="買うものを入力"
-          aria-label="買うものを入力"
-          maxlength="60"
-          enterkeyhint="done"
-        />
-        <div class="add-row">
-          <!-- カテゴリー選択（JS で中身を作ります。入力に合わせて自動で選ばれます） -->
-          <select id="buy-category" class="category-select" aria-label="カテゴリーを選ぶ"></select>
-          <button type="submit" class="add-btn">追加</button>
+    <section class="panel" id="panel-buy" role="tabpanel" aria-labelledby="buy-heading" tabindex="0">
+      <div class="card">
+        <div class="card-head">
+          <h2 id="buy-heading" class="card-title"><span class="emoji" aria-hidden="true">🛒</span> 買い物リスト</h2>
         </div>
-        <p class="form-hint">カテゴリーは自動で選ばれます。ちがうときは変えてね。</p>
-      </form>
 
-      <!-- 状態表示（空リスト） -->
-      <p id="buy-empty" class="empty-msg" hidden>買うものを追加してね 🛍️</p>
+        <form id="buy-form" class="add-form add-form--buy" autocomplete="off">
+          <input
+            id="buy-input"
+            class="add-input"
+            type="text"
+            name="buy"
+            placeholder="買うものを入力"
+            aria-label="買うものを入力"
+            maxlength="60"
+            enterkeyhint="done"
+          />
+          <div class="add-row">
+            <!-- カテゴリー選択（JS で中身を作ります。入力に合わせて自動で選ばれます） -->
+            <select id="buy-category" class="category-select" aria-label="カテゴリーを選ぶ"></select>
+            <button type="submit" class="add-btn">追加</button>
+          </div>
+          <p class="form-hint">カテゴリーは自動で選ばれます。ちがうときは変えてね。</p>
+        </form>
 
-      <!-- カテゴリーごとのグループがここに入ります -->
-      <div id="buy-groups" class="group-wrap" aria-label="買い物リストの品物"></div>
+        <!-- 状態表示（空リスト） -->
+        <p id="buy-empty" class="empty-msg" hidden>買うものを追加してね 🛍️</p>
+
+        <!-- カテゴリーごとのグループがここに入ります -->
+        <div id="buy-groups" class="group-wrap" aria-label="買い物リストの品物"></div>
+
+        <p class="panel-note">チェックした品物は、食材なら冷蔵庫へ、日用品なら「家にあるもの」へ自動でうつります。</p>
+      </div>
     </section>
 
     <!-- ============ 冷蔵庫 ============ -->
-    <section class="card" aria-labelledby="fridge-heading">
-      <div class="card-head">
-        <h2 id="fridge-heading" class="card-title"><span class="emoji" aria-hidden="true">🧊</span> 冷蔵庫にあるもの</h2>
-        <span id="fridge-count" class="count-badge" aria-hidden="true"></span>
+    <section class="panel" id="panel-fridge" role="tabpanel" aria-labelledby="fridge-heading" tabindex="0">
+      <div class="card">
+        <div class="card-head">
+          <h2 id="fridge-heading" class="card-title"><span class="emoji" aria-hidden="true">🧊</span> 冷蔵庫にあるもの</h2>
+        </div>
+
+        <form id="fridge-form" class="add-form" autocomplete="off">
+          <input
+            id="fridge-input"
+            class="add-input"
+            type="text"
+            name="fridge"
+            placeholder="家にある食材を入力"
+            aria-label="家にある食材を入力"
+            maxlength="60"
+            enterkeyhint="done"
+          />
+          <button type="submit" class="add-btn add-btn--fridge">追加</button>
+        </form>
+
+        <p id="fridge-empty" class="empty-msg" hidden>冷蔵庫はまだ空っぽ。あるものを追加してね 🥕</p>
+
+        <!-- カテゴリーごとのグループがここに入ります -->
+        <div id="fridge-groups" class="group-wrap" aria-label="冷蔵庫の品物"></div>
       </div>
-
-      <form id="fridge-form" class="add-form" autocomplete="off">
-        <input
-          id="fridge-input"
-          class="add-input"
-          type="text"
-          name="fridge"
-          placeholder="家にある食材を入力"
-          aria-label="家にある食材を入力"
-          maxlength="60"
-          enterkeyhint="done"
-        />
-        <button type="submit" class="add-btn add-btn--fridge">追加</button>
-      </form>
-
-      <p id="fridge-empty" class="empty-msg" hidden>冷蔵庫はまだ空っぽ。あるものを追加してね 🥕</p>
-
-      <!-- カテゴリーごとのグループがここに入ります -->
-      <div id="fridge-groups" class="group-wrap" aria-label="冷蔵庫の品物"></div>
     </section>
 
     <!-- ============ 家にあるもの（日用品） ============ -->
-    <section class="card" aria-labelledby="home-heading">
-      <div class="card-head">
-        <h2 id="home-heading" class="card-title"><span class="emoji" aria-hidden="true">🧴</span> 家にあるもの</h2>
-        <span id="home-count" class="count-badge" aria-hidden="true"></span>
+    <section class="panel" id="panel-home" role="tabpanel" aria-labelledby="home-heading" tabindex="0">
+      <div class="card">
+        <div class="card-head">
+          <h2 id="home-heading" class="card-title"><span class="emoji" aria-hidden="true">🧴</span> 家にあるもの</h2>
+        </div>
+
+        <form id="home-form" class="add-form" autocomplete="off">
+          <input
+            id="home-input"
+            class="add-input"
+            type="text"
+            name="home"
+            placeholder="日用品を入力"
+            aria-label="日用品を入力"
+            maxlength="60"
+            enterkeyhint="done"
+          />
+          <button type="submit" class="add-btn add-btn--home">追加</button>
+        </form>
+
+        <p id="home-empty" class="empty-msg" hidden>日用品のストックを追加してね 🧻</p>
+
+        <ul id="home-list" class="item-list" aria-label="家にある日用品"></ul>
       </div>
-
-      <form id="home-form" class="add-form" autocomplete="off">
-        <input
-          id="home-input"
-          class="add-input"
-          type="text"
-          name="home"
-          placeholder="日用品を入力"
-          aria-label="日用品を入力"
-          maxlength="60"
-          enterkeyhint="done"
-        />
-        <button type="submit" class="add-btn add-btn--home">追加</button>
-      </form>
-
-      <p id="home-empty" class="empty-msg" hidden>日用品のストックを追加してね 🧻</p>
-
-      <ul id="home-list" class="item-list" aria-label="家にある日用品"></ul>
     </section>
-
-    <!-- 全体の状態メッセージ（読み込み中・エラー） -->
-    <div id="status-banner" class="status-banner" role="status" aria-live="polite" hidden></div>
 
   </main>
 
-  <footer class="app-footer">
-    <p>チェックした品物は、食材なら冷蔵庫へ、日用品なら「家にあるもの」へ自動でうつります。</p>
-  </footer>
+  <!-- 全体の状態メッセージ（読み込み中・エラー） -->
+  <div id="status-banner" class="status-banner" role="status" aria-live="polite" hidden></div>
 
   <!-- Supabase クライアント（CDN） -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
